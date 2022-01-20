@@ -10,19 +10,21 @@
  * - you can copy code pressing a button "Copy" (only for extended code snippets);
  * - if a specific part of code is selected and the browser supports getSelection,
  * the selected text will be copied; else whole code snippet will be copied;
- * - when text is successfully copied to clipboard, the modal is shown. To close it,
- * it's enough to scroll the window or press any key.
+ * - when text is successfully copied to the clipboard, the modal is shown. To close it,
+ * it's enough to scroll the window, click mouse outside the modal
+ * or press any key (except ctrl and alt).
  */
 
 (() => {
   const codeElements = document.querySelectorAll('code');
   if (!codeElements.length) return;
 
-  const createElement = (type, { style = {}, onClick, ...rest }) => {
+  const createElement = (type, { style = {}, onClick, children = [], ...rest }) => {
     const el = document.createElement(type);
     Object.assign(el.style, style);
     if (onClick) el.addEventListener('click', onClick);
     Object.assign(el, rest);
+    children.forEach((ch) => el.appendChild(ch));
     return el;
   };
 
@@ -57,34 +59,31 @@
         padding: '5px',
         overflow: 'auto',
         whiteSpace: 'pre'
-      }
+      },
+      children: [
+        createElement('h2', {
+          style: { textAlign: 'center' },
+          textContent: headerText
+        }),
+        createElement('div', { textContent: text })
+      ]
     });
 
-    modal.prepend(
-      createElement('h2', {
-        style: { textAlign: 'center', borderBottom: '1px solid black' },
-        textContent: headerText
-      })
-    );
+    [shadow, modal].forEach((el) => document.body.appendChild(el));
 
-    modal.appendChild(createElement('div', { textContent: text }));
-
-    const onKeyDownAndScroll = () => closeAlert();
+    const onKeyDownAndScroll = (e) => e.altKey || e.ctrlKey || closeAlert();
     ['keydown', 'scroll'].forEach((ev) => window.addEventListener(ev, onKeyDownAndScroll));
 
     closeAlert = () => {
       [modal, shadow].forEach((el) => document.body.removeChild(el));
       ['keydown', 'scroll'].forEach((ev) => window.removeEventListener(ev, onKeyDownAndScroll));
     };
-
-    [modal, shadow].forEach((el) => document.body.appendChild(el));
   };
 
   const copyToClipboardFn = navigator.clipboard
     ? (str) => navigator.clipboard.writeText(str)
     : (str) => {
-        const el = document.createElement('textarea');
-        el.value = str;
+        const el = createElement('textarea', { value: str });
         document.body.appendChild(el);
         el.select();
         document.execCommand('copy');
@@ -93,7 +92,7 @@
 
   const copyToClipboard = (str) => {
     copyToClipboardFn(str);
-    customAlert(str, 'The folowing code\nwas copied to clipboard');
+    customAlert(str, 'The folowing code\nwas copied to the clipboard:');
   };
 
   const copySelection = window.getSelection
@@ -111,10 +110,13 @@
     el.addEventListener('click', ({ altKey }) => {
       if (altKey) copySelection(el) || copyToClipboard(el.textContent);
     });
-    if (['SPAN', 'P', 'A', 'STRONG'].some((name) => el.parentNode.nodeName === name)) return;
+    if (['SPAN', 'P', 'A', 'STRONG'].includes(el.parentNode.nodeName)) return;
     const button = createElement('button', {
       textContent: 'Copy',
-      onClick: () => copySelection(el) || copyToClipboard(el.textContent),
+      onClick() {
+        copySelection(el) || copyToClipboard(el.textContent);
+        button.blur();
+      },
       style: {
         position: 'relative',
         top: '-5px',
