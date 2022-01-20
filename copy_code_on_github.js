@@ -63,7 +63,7 @@
     modal.prepend(
       createElement('h2', {
         style: { textAlign: 'center', borderBottom: '1px solid black' },
-        innerHTML: headerText
+        textContent: headerText
       })
     );
 
@@ -93,7 +93,7 @@
 
   const copyToClipboard = (str) => {
     copyToClipboardFn(str);
-    customAlert(str, 'The folowing code<br>was copied to clipboard');
+    customAlert(str, 'The folowing code\nwas copied to clipboard');
   };
 
   const copySelection = window.getSelection
@@ -113,7 +113,7 @@
     });
     if (['SPAN', 'P', 'A', 'STRONG'].some((name) => el.parentNode.nodeName === name)) return;
     const button = createElement('button', {
-      innerHTML: 'Copy',
+      textContent: 'Copy',
       onClick: () => copySelection(el) || copyToClipboard(el.textContent),
       style: {
         position: 'relative',
