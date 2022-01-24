@@ -61,10 +61,7 @@
         whiteSpace: 'pre'
       },
       children: [
-        createElement('h2', {
-          style: { textAlign: 'center' },
-          textContent: headerText
-        }),
+        createElement('h2', { style: { textAlign: 'center' }, textContent: headerText }),
         createElement('div', { textContent: text })
       ]
     });
@@ -80,18 +77,16 @@
     };
   };
 
-  const copyToClipboardFn = navigator.clipboard
-    ? (str) => navigator.clipboard.writeText(str)
-    : (str) => {
-        const el = createElement('textarea', { value: str });
-        document.body.appendChild(el);
-        el.select();
-        document.execCommand('copy');
-        document.body.removeChild(el);
-      };
-
   const copyToClipboard = (str) => {
-    copyToClipboardFn(str);
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(str);
+    } else {
+      const el = createElement('textarea', { value: str });
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+    }
     customAlert(str, 'The folowing code\nwas copied to the clipboard:');
   };
 
@@ -110,7 +105,7 @@
     el.addEventListener('click', ({ altKey }) => {
       if (altKey) copySelection(el) || copyToClipboard(el.textContent);
     });
-    if (['SPAN', 'P', 'A', 'STRONG'].includes(el.parentNode.nodeName)) return;
+    if (el.parentNode.nodeName !== 'PRE') return;
     const button = createElement('button', {
       textContent: 'Copy',
       onClick() {
